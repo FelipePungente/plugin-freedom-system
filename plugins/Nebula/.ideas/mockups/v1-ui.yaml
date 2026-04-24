@@ -1,0 +1,113 @@
+version: 1
+plugin: Nebula
+aesthetic: swiss-minimal-001
+generated: 2026-04-24
+status: design_iteration
+
+window:
+  width: 520
+  height: 300
+  resizable: false
+
+layout:
+  type: horizontal-centered
+  sections:
+    - header
+    - controls
+    - footer
+
+header:
+  height: 62
+  border_bottom: true
+  elements:
+    - type: text
+      id: plugin-name
+      text: "Nebula"
+      style: {font_size: 22, font_weight: 700, letter_spacing: 0.08em, text_transform: uppercase}
+    - type: text
+      id: plugin-tag
+      text: "Lo-Fi Reverb"
+      style: {font_size: 11, border: "2px solid #000", padding: "3px 8px", text_transform: uppercase}
+
+controls:
+  layout: flex-row
+  gap: 40px
+  padding: "20px 28px"
+  items:
+    - id: size
+      type: knob
+      label: "Size"
+      size: secondary  # 76×76
+      param:
+        id: size
+        type: float
+        min: 0.0
+        max: 1.0
+        default: 0.5
+        scale: linear
+      format: "{value*100:.0f}%"
+
+    - id: mistero
+      type: knob
+      label: "Mistero"
+      size: primary    # 96×96 (dominant control)
+      param:
+        id: mistero
+        type: float
+        min: 200
+        max: 8000
+        default: 6000
+        scale: logarithmic
+        unit: Hz
+      format: "{value>=1000: value/1000:.1f kHz | value:.0f Hz}"
+
+    - id: mix
+      type: knob
+      label: "Mix"
+      size: secondary  # 76×76
+      param:
+        id: mix
+        type: float
+        min: 0.0
+        max: 1.0
+        default: 0.4
+        scale: linear
+      format: "{value*100:.0f}%"
+
+footer:
+  height: 32
+  border_top: true
+  elements:
+    - type: text
+      text: "WebView Mockup v1"
+      style: {font_size: 9, color: "#666666", text_transform: uppercase, align: right}
+
+aesthetic_applied:
+  colors:
+    bg_main: "#FFFFFF"
+    text_primary: "#000000"
+    text_secondary: "#666666"
+    border_color: "#000000"
+    border_width: 2px
+    border_radius: 0
+  typography:
+    font_family: "Inter, DM Sans, Helvetica Neue, sans-serif"
+  controls:
+    knob_fill: "#FFFFFF"
+    knob_border: "2px solid #000000"
+    knob_indicator: black_line_from_center
+    transitions: none
+    shadows: none
+  design_notes:
+    - "Mistero knob is primary (96px) and centered — dominant visual element"
+    - "Size and Mix are secondary (76px) flanking Mistero symmetrically"
+    - "Swiss Minimal: zero border-radius, zero shadows, 2px black borders"
+    - "Log scale for Mistero (200-8kHz) gives perceptually even control"
+    - "Double-click any knob to reset to default"
+
+interaction:
+  knob_gesture: vertical_drag
+  drag_sensitivity: 180px_per_full_range
+  reset_gesture: double_click
+  value_display: below_label
+  messaging: window.__JUCE__.postMessage(JSON)

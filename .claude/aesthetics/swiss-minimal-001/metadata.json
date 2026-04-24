@@ -5,7 +5,13 @@
   "sourcePlugin": null,
   "sourceVersion": null,
   "created": "2025-11-11T18:30:00Z",
-  "usedInPlugins": [],
+  "usedInPlugins": [
+    {
+      "pluginName": "Nebula",
+      "appliedDate": "2026-04-24",
+      "mockupPath": "plugins/Nebula/.ideas/mockups/v1-ui-test.html"
+    }
+  ],
   "tags": [
     "swiss",
     "minimal",
