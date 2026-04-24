@@ -1,0 +1,50 @@
+name: Build Plugins
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel $(sysctl -n hw.logicalcpu)
+
+      - name: Collect VST3 artifacts
+        run: |
+          mkdir -p artifacts/VST3 artifacts/AU
+          find build -name "*.vst3" -type d | while read p; do
+            cp -R "$p" artifacts/VST3/
+          done
+          find build -name "*.component" -type d | while read p; do
+            cp -R "$p" artifacts/AU/
+          done
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: VST3-plugins
+          path: artifacts/VST3/
+          retention-days: 30
+
+      - name: Upload AU
+        uses: actions/upload-artifact@v4
+        with:
+          name: AU-plugins
+          path: artifacts/AU/
+          retention-days: 30
