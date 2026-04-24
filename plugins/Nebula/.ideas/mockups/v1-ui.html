@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nebula</title>
+<style>
+  :root {
+    --bg-main: #FFFFFF;
+    --accent: #000000;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --border: 2px solid #000000;
+    --font: "Inter", "DM Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --spacing-section: 40px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-main);
+    font-family: var(--font);
+    color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .plugin-root {
+    width: 520px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    border: var(--border);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px 14px;
+    border-bottom: var(--border);
+  }
+
+  .plugin-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .plugin-tag {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: var(--border);
+    padding: 3px 8px;
+  }
+
+  /* Controls area */
+  .controls {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-section);
+    padding: 20px 28px;
+  }
+
+  /* Individual knob block */
+  .knob-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .knob-block.primary .knob-canvas {
+    width: 96px;
+    height: 96px;
+  }
+
+  .knob-block.secondary .knob-canvas {
+    width: 76px;
+    height: 76px;
+  }
+
+  .knob-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .knob-block.primary .knob-label {
+    font-size: 12px;
+  }
+
+  .knob-value {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    min-width: 64px;
+  }
+
+  /* Footer */
+  .footer {
+    border-top: var(--border);
+    padding: 8px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .footer-label {
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+
+<div class="plugin-root">
+  <div class="header">
+    <span class="plugin-name">Nebula</span>
+    <span class="plugin-tag">Lo-Fi Reverb</span>
+  </div>
+
+  <div class="controls">
+    <!-- SIZE -->
+    <div class="knob-block secondary" id="block-size">
+      <canvas class="knob-canvas" id="knob-size" width="76" height="76"
+              data-param="size" data-value="0.5" data-min="0" data-max="1"></canvas>
+      <span class="knob-label">Size</span>
+      <span class="knob-value" id="val-size">50%</span>
+    </div>
+
+    <!-- MISTERO (primary/center) -->
+    <div class="knob-block primary" id="block-mistero">
+      <canvas class="knob-canvas" id="knob-mistero" width="96" height="96"
+              data-param="mistero" data-value="6000" data-min="200" data-max="8000"></canvas>
+      <span class="knob-label">Mistero</span>
+      <span class="knob-value" id="val-mistero">6.0 kHz</span>
+    </div>
+
+    <!-- MIX -->
+    <div class="knob-block secondary" id="block-mix">
+      <canvas class="knob-canvas" id="knob-mix" width="76" height="76"
+              data-param="mix" data-value="0.4" data-min="0" data-max="1"></canvas>
+      <span class="knob-label">Mix</span>
+      <span class="knob-value" id="val-mix">40%</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="footer-label">Nebula v1</span>
+  </div>
+</div>
+
+<!-- JUCE WebView bridge (ES6 module - Pattern #21) -->
+<script type="module" src="js/juce/index.js"></script>
+
+<script type="module">
+import { getSliderState } from './js/juce/index.js';
+
+// ─── Disable context menu (native application feel) ──────────────────────────
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ─── Knob drawing ─────────────────────────────────────────────────────────────
+function drawKnob(canvas, normValue) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = Math.min(W, H) / 2 - 3;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // White fill
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2px black border
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Arc sweep: 135° to 405° (270° total)
+  const startAngle = (135 / 180) * Math.PI;
+  const endAngle   = (405 / 180) * Math.PI;
+  const currentAngle = startAngle + normValue * (endAngle - startAngle);
+
+  // Track arc (light gray)
+  ctx.strokeStyle = '#DDDDDD';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R - 8, startAngle, endAngle);
+  ctx.stroke();
+
+  // Value arc (black, up to current)
+  if (normValue > 0) {
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 8, startAngle, currentAngle);
+    ctx.stroke();
+  }
+
+  // Indicator line from center
+  const lineR = R - 4;
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'butt';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(
+    cx + Math.cos(currentAngle) * lineR,
+    cy + Math.sin(currentAngle) * lineR
+  );
+  ctx.stroke();
+
+  // Center dot
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ─── Value formatting ─────────────────────────────────────────────────────────
+function formatValue(param, value) {
+  switch (param) {
+    case 'mistero':
+      return value >= 1000 ? (value / 1000).toFixed(1) + ' kHz' : Math.round(value) + ' Hz';
+    case 'size':
+    case 'mix':
+      return Math.round(value * 100) + '%';
+    default:
+      return value.toFixed(2);
+  }
+}
+
+// ─── Logarithmic ↔ normalised conversion for mistero ──────────────────────────
+const LOG_MIN = Math.log(200);
+const LOG_MAX = Math.log(8000);
+
+function normToValue(param, norm) {
+  if (param === 'mistero') {
+    return Math.exp(LOG_MIN + norm * (LOG_MAX - LOG_MIN));
+  }
+  const canvas = document.querySelector(`[data-param="${param}"]`);
+  const min = parseFloat(canvas.dataset.min);
+  const max = parseFloat(canvas.dataset.max);
+  return min + norm * (max - min);
+}
+
+function valueToNorm(param, value) {
+  if (param === 'mistero') {
+    return (Math.log(value) - LOG_MIN) / (LOG_MAX - LOG_MIN);
+  }
+  const canvas = document.querySelector(`[data-param="${param}"]`);
+  const min = parseFloat(canvas.dataset.min);
+  const max = parseFloat(canvas.dataset.max);
+  return (value - min) / (max - min);
+}
+
+// ─── Default values for double-click reset ────────────────────────────────────
+const DEFAULTS = { mistero: 6000, size: 0.5, mix: 0.4 };
+
+// ─── Knob initialisation (JUCE WebView binding - Patterns #12, #15, #16, #21) ─
+function initKnob(canvas) {
+  const param   = canvas.dataset.param;
+  const valueEl = document.getElementById('val-' + param);
+
+  // Get JUCE slider state (ES6 import - Pattern #21)
+  const sliderState = getSliderState(param);
+
+  // Local visual state
+  let lastY = 0;
+  let isDragging = false;
+
+  // Read current normalised value from JUCE and redraw
+  function syncFromJUCE() {
+    // valueChangedEvent fires with NO parameters (Pattern #15)
+    const norm  = sliderState.getNormalisedValue();
+    const value = normToValue(param, norm);
+    canvas.dataset.value = value;
+    drawKnob(canvas, norm);
+    if (valueEl) valueEl.textContent = formatValue(param, value);
+  }
+
+  // Subscribe to JUCE parameter changes (Pattern #15 - no params in callback)
+  sliderState.valueChangedEvent.addListener(syncFromJUCE);
+
+  // Initial draw from current JUCE value
+  syncFromJUCE();
+
+  // ── Drag interaction (Pattern #16 - relative drag, NOT absolute) ────────────
+  function onDown(e) {
+    e.preventDefault();
+    isDragging = true;
+    lastY = e.clientY ?? (e.touches?.[0]?.clientY ?? 0);
+    sliderState.sliderDragStarted();
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend',  onUp);
+  }
+
+  function onMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const currentY = e.clientY ?? (e.touches?.[0]?.clientY ?? 0);
+    const deltaY   = lastY - currentY;        // positive = drag up = increase
+    lastY = currentY;                          // update for next frame (Pattern #16)
+
+    const currentNorm = sliderState.getNormalisedValue();
+    const newNorm     = Math.max(0, Math.min(1, currentNorm + deltaY / 180));
+
+    sliderState.setNormalisedValue(newNorm);
+
+    const value = normToValue(param, newNorm);
+    canvas.dataset.value = value;
+    drawKnob(canvas, newNorm);
+    if (valueEl) valueEl.textContent = formatValue(param, value);
+  }
+
+  function onUp() {
+    isDragging = false;
+    sliderState.sliderDragEnded();
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend',  onUp);
+  }
+
+  canvas.addEventListener('mousedown',  onDown);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+
+  // Double-click to reset to default
+  canvas.addEventListener('dblclick', () => {
+    const defaultValue = DEFAULTS[param] ?? parseFloat(canvas.dataset.min);
+    const defaultNorm  = valueToNorm(param, defaultValue);
+    sliderState.setNormalisedValue(defaultNorm);
+    canvas.dataset.value = defaultValue;
+    drawKnob(canvas, defaultNorm);
+    if (valueEl) valueEl.textContent = formatValue(param, defaultValue);
+  });
+}
+
+// ─── Init all knobs ───────────────────────────────────────────────────────────
+document.querySelectorAll('.knob-canvas').forEach(initKnob);
+</script>
+
+</body>
+</html>

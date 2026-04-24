@@ -2,7 +2,7 @@ version: 1
 plugin: Nebula
 aesthetic: swiss-minimal-001
 generated: 2026-04-24
-status: design_iteration
+status: finalized
 
 window:
   width: 520
