@@ -41,6 +41,7 @@
 | Words | 💡 Ideated | - | Utility (MIDI Sequencer) | 2025-11-13 |
 | PadForge | 💡 Ideated | - | Synth (Instrument) | 2025-11-14 |
 | AngelGrain | 📦 Installed | 1.0.0 | Audio Effect (Granular Delay) | 2025-11-19 |
+| Nebula | 💡 Ideated (Draft Params) | - | Audio Effect (Reverb) | 2026-04-24 |
 
 **For detailed plugin information (lifecycle timeline, known issues, parameters, etc.), see:**
 `plugins/[PluginName]/NOTES.md`
